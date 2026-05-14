@@ -1,4 +1,6 @@
 /**
+ * @OnlyCurrentDoc
+ * 
  * Google Apps Script to handle form submissions and save to Google Sheets.
  * 
  * Instructions:

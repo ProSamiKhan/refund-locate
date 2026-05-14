@@ -85,7 +85,7 @@ export default function App() {
     
     // Logic for Google Apps Script submission
     try {
-      const scriptURL = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL;
+      const scriptURL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
       
       if (!scriptURL) {
         // Fallback for demo if URL is not yet configured in .env
