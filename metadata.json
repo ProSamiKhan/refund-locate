@@ -1,0 +1,6 @@
+{
+  "name": "English House Academy Refund",
+  "description": "Official refund request form for English House Academy students.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
