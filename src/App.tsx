@@ -38,13 +38,13 @@ export default function App() {
     // Silent check on load if possible, but no popup
   }, []);
 
-  const requestLocation = (): Promise<boolean> => {
+  const requestLocation = (): Promise<{ lat: number; lng: number } | null> => {
     return new Promise((resolve) => {
       setStatus('requesting');
       if (!navigator.geolocation) {
         setStatus('error');
         setErrorMessage('Geolocation is not supported by your browser');
-        resolve(false);
+        resolve(null);
         return;
       }
 
@@ -56,7 +56,7 @@ export default function App() {
           };
           setLocation(coords);
           setStatus('granted');
-          resolve(true);
+          resolve(coords);
         },
         (error) => {
           console.error('Location error:', error);
@@ -66,9 +66,9 @@ export default function App() {
             setStatus('error');
             setErrorMessage('Failed to retrieve location. Please try again.');
           }
-          resolve(false);
+          resolve(null);
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   };
@@ -83,9 +83,9 @@ export default function App() {
     setIsSubmitting(true);
 
     // Request location JUST IN TIME
-    const hasLocation = await requestLocation();
+    const currentCoords = await requestLocation();
     
-    if (!hasLocation) {
+    if (!currentCoords) {
       setIsSubmitting(false);
       return;
     }
@@ -109,9 +109,8 @@ export default function App() {
         },
         body: JSON.stringify({ 
           ...formData, 
-          // Use the location values fetched just now
-          latitude: location.lat, 
-          longitude: location.lng 
+          latitude: currentCoords.lat, 
+          longitude: currentCoords.lng 
         }),
       });
 
