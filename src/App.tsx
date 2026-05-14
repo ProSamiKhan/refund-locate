@@ -85,21 +85,22 @@ export default function App() {
     
     // Logic for Google Apps Script submission
     try {
-      const scriptURL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+      const scriptURL = (import.meta as any).env.VITE_GOOGLE_SCRIPT_URL;
       
       if (!scriptURL) {
-        // Fallback for demo if URL is not yet configured in .env
+        console.error('URL error: VITE_GOOGLE_SCRIPT_URL is missing in Settings > Secrets.');
+        // Fallback for testing if not configured
         await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log('Demo Mode: URL not found in .env, simulating submission...', { ...formData, ...location });
         setSubmitSuccess(true);
         return;
       }
 
+      // Using Fetch with text/plain as body to avoid CORS preflight, which GAS often blocks
       await fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors', // Required for Google Apps Script redirects
+        mode: 'no-cors',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
         body: JSON.stringify({ 
           ...formData, 
@@ -260,8 +261,13 @@ export default function App() {
           </button>
         </form>
 
-        <div className="px-8 pb-8 text-center text-[10px] text-zinc-400 uppercase tracking-widest">
-          English House Academy • Official Refund Portal
+        <div className="px-8 pb-8 text-center text-[10px] text-zinc-400 uppercase tracking-widest flex flex-col items-center gap-1">
+          <span>English House Academy • Official Refund Portal</span>
+          {!(import.meta as any).env.VITE_GOOGLE_SCRIPT_URL && (
+            <span className="text-[8px] text-red-300 font-bold lowercase tracking-normal">
+              (Admin: check secrets configuration)
+            </span>
+          )}
         </div>
       </motion.div>
     </div>

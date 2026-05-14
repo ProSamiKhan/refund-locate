@@ -1,47 +1,42 @@
 /**
  * @OnlyCurrentDoc
- * 
- * Google Apps Script to handle form submissions and save to Google Sheets.
- * 
- * Instructions:
- * 1. Open a Google Sheet.
- * 2. Click on 'Extensions' > 'Apps Script'.
- * 3. Delete any code in the editor and paste this code.
- * 4. Create header row in your sheet: Name, Admission ID, Joining Date, Exit Date, Latitude, Longitude, Timestamp.
- * 5. Click 'Deploy' > 'New deployment'.
- * 6. Select 'Web app'.
- * 7. Set 'Execute as' to 'Me'.
- * 8. Set 'Who has access' to 'Anyone'.
- * 9. Copy the Web App URL and use it in your frontend code for submissions.
  */
 
 function doPost(e) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const data = JSON.parse(e.postData.contents);
+    // Access the first sheet safely
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheets()[0]; 
+    
+    let data;
+    try {
+      data = JSON.parse(e.postData.contents);
+    } catch (f) {
+      // Fallback if data comes in as parameters
+      data = e.parameter;
+    }
     
     // Validate required fields
-    if (!data.name || !data.latitude || !data.longitude) {
+    if (!data.name || !data.latitude) {
       return ContentService.createTextOutput(JSON.stringify({
         status: 'error',
         message: 'Missing required data'
       })).setMimeType(ContentService.MimeType.JSON);
     }
     
-    // Append the data
+    // Append the data: Name, Admission ID, Join, Exit, Lat, Lng, Date
     sheet.appendRow([
-      data.name,
-      data.admissionId,
-      data.joiningDate,
-      data.exitDate,
-      data.latitude,
-      data.longitude,
-      new Date()
+      data.name || '',
+      data.admissionId || '',
+      data.joiningDate || '',
+      data.exitDate || '',
+      data.latitude || '',
+      data.longitude || '',
+      new Date().toLocaleString()
     ]);
     
     return ContentService.createTextOutput(JSON.stringify({
-      status: 'success',
-      message: 'Data saved successfully'
+      status: 'success'
     })).setMimeType(ContentService.MimeType.JSON);
     
   } catch (err) {
@@ -50,21 +45,4 @@ function doPost(e) {
       message: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
-}
-
-// Optional: Test function to verify script manually
-function testScript() {
-  const mockData = {
-    postData: {
-      contents: JSON.stringify({
-        name: "Test User",
-        admissionId: "TEST-123",
-        joiningDate: "2024-01-01",
-        exitDate: "2024-12-31",
-        latitude: 12.3456,
-        longitude: 78.9101
-      })
-    }
-  };
-  doPost(mockData);
 }
