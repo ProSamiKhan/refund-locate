@@ -35,36 +35,42 @@ export default function App() {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    requestLocation();
+    // Silent check on load if possible, but no popup
   }, []);
 
-  const requestLocation = () => {
-    setStatus('requesting');
-    if (!navigator.geolocation) {
-      setStatus('error');
-      setErrorMessage('Geolocation is not supported by your browser');
-      return;
-    }
+  const requestLocation = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setStatus('requesting');
+      if (!navigator.geolocation) {
+        setStatus('error');
+        setErrorMessage('Geolocation is not supported by your browser');
+        resolve(false);
+        return;
+      }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setStatus('granted');
-      },
-      (error) => {
-        console.error('Location error:', error);
-        if (error.code === error.PERMISSION_DENIED) {
-          setStatus('denied');
-        } else {
-          setStatus('error');
-          setErrorMessage('Failed to retrieve location. Please try again.');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setLocation(coords);
+          setStatus('granted');
+          resolve(true);
+        },
+        (error) => {
+          console.error('Location error:', error);
+          if (error.code === error.PERMISSION_DENIED) {
+            setStatus('denied');
+          } else {
+            setStatus('error');
+            setErrorMessage('Failed to retrieve location. Please try again.');
+          }
+          resolve(false);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,28 +80,27 @@ export default function App() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Strict validation: even if button is enabled via Inspect Element
-    if (!location.lat || !location.lng) {
-      alert('Security Error: Location verification is required to submit this form.');
+    // Request location JUST IN TIME
+    const hasLocation = await requestLocation();
+    
+    if (!hasLocation) {
+      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
-    
     // Logic for Google Apps Script submission
     try {
       const scriptURL = (import.meta as any).env.VITE_GOOGLE_SCRIPT_URL;
       
       if (!scriptURL) {
         console.error('URL error: VITE_GOOGLE_SCRIPT_URL is missing in Settings > Secrets.');
-        // Fallback for testing if not configured
         await new Promise(resolve => setTimeout(resolve, 1500));
         setSubmitSuccess(true);
         return;
       }
 
-      // Using Fetch with text/plain as body to avoid CORS preflight, which GAS often blocks
       await fetch(scriptURL, {
         method: 'POST',
         mode: 'no-cors',
@@ -104,6 +109,7 @@ export default function App() {
         },
         body: JSON.stringify({ 
           ...formData, 
+          // Use the location values fetched just now
           latitude: location.lat, 
           longitude: location.lng 
         }),
@@ -236,13 +242,12 @@ export default function App() {
 
           <button
             type="submit"
-            disabled={status !== 'granted' || isSubmitting || submitSuccess}
+            disabled={isSubmitting || submitSuccess}
             className={`
               w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all flex items-center justify-center gap-2
-              ${status === 'granted' 
+              ${!submitSuccess 
                 ? 'bg-[#00007B] text-white hover:bg-zinc-900 shadow-xl shadow-zinc-200 active:scale-[0.98]' 
-                : 'bg-zinc-100 text-zinc-300 cursor-not-allowed'}
-              ${submitSuccess ? 'bg-emerald-600 hover:bg-emerald-600' : ''}
+                : 'bg-emerald-600 text-white cursor-default'}
             `}
           >
             {isSubmitting ? (
