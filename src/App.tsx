@@ -158,11 +158,34 @@ export default function App() {
               exit={{ height: 0, opacity: 0 }}
               className="bg-red-50 border-y border-red-100 overflow-hidden"
             >
-              <div className="px-8 py-3 flex items-center justify-center gap-3">
-                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-                <p className="text-[11px] font-medium text-red-600 leading-tight">
-                  Verification required. Please allow location access and refresh the page to continue.
-                </p>
+              <div className="px-8 py-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-[13px] font-bold text-red-700">
+                      Location Access Blocked
+                    </p>
+                    <p className="text-[11px] text-red-600/80 leading-relaxed">
+                      Refund process requires physical location verification. You clicked "Block" or "Never".
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-white/60 rounded-lg p-3 border border-red-100/50 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">How to Fix:</p>
+                  <ul className="text-[11px] text-zinc-600 space-y-1 ml-4 list-disc">
+                    <li>Click the <b>Lock Icon</b> next to the website URL (top bar).</li>
+                    <li>Toggle <b>Location</b> to <b>ON</b>.</li>
+                    <li><b>Refresh</b> the page and try again.</li>
+                  </ul>
+                </div>
+
+                <button 
+                  onClick={() => requestLocation()}
+                  className="w-full py-2 bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold rounded-lg transition-colors border border-red-200"
+                >
+                  CHECK PERMISSION AGAIN
+                </button>
               </div>
             </motion.div>
           )}

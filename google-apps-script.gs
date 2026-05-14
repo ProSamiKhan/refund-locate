@@ -32,8 +32,11 @@ function doPost(e) {
       data.exitDate || '',
       data.latitude || '',
       data.longitude || '',
-      new Date().toLocaleString()
+      new Date().toLocaleString("en-US", {timeZone: "GMT"})
     ]);
+    
+    // Force spreadsheet to sync and commit the write
+    SpreadsheetApp.flush();
     
     return ContentService.createTextOutput(JSON.stringify({
       status: 'success'
